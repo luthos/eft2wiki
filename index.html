@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="utf-8">
+ <title>EFT to Mediawiki conversion tool</title>
+ <style>
+  body { font: small sans-serif; }
+  table { width: 100%; }
+  textarea { width: 100%; height: 180pt; }
+  td { vertical-align:top; padding: 5px; }
+  h1, h2, h3 { margin: 0; }
+  dt { font-weight: bold; }
+ </style>
+ <script>
+  function modified() {
+   var pa = document.getElementById("previewarea");
+   var ta = document.getElementById("pastearea");
+   var ma = document.getElementById("mediawiki");
+   var da = document.getElementById("debugarea");
+   var obj = parseEFT(ta.value);
+   da.value = JSON.stringify(obj, null, 4);
+   ma.value = makeMediaWiki(obj);
+   pa.innerHTML = makeHTML(obj);
+  }
+  function parseEFT(text) {
+   var lines = text.split("\n");
+   var firstline = /^\[([^,]+), (.+)\]$/.exec(lines[0]);
+   var obj = {
+        //originaltext: text,
+        //originallines: lines,
+        shiptype: firstline[1],
+        fitname: firstline[2],
+        lows: [],
+        meds: [],
+        highs: [],
+        rigs: [],
+        drones: [] };
+   var index = 1; // current line of lines[]
+   var todolist = [obj.lows, obj.meds, obj.highs, obj.rigs, undefined, obj.drones];
+   var todoindex = 0; // where in the above todolist we are at
+   var repeated = 0; // how many times an item is repeated
+   for(; index < lines.length; index += 1) {
+    if(lines[index] === "") {
+     todoindex += 1;
+    } else {
+     for(repeated = 1; lines[index+1] === lines[index]; repeated += 1) {
+      index += 1
+     }
+     todolist[todoindex].push({ repeats: repeated, type: lines[index] });
+    }
+   }
+   // EFT likes to x the drones..
+   for(index=0; index < obj.drones.length; index++) {
+    var m = /^(.+) x([2345])$/.exec(obj.drones[index].type);
+    if(m != null) {
+     obj.drones[index] = { repeats: parseInt(m[2]) * obj.drones[index].repeats, type: 
+m[1] };
+    }
+   }
+   // Parse out any ammo in highs or meds
+   var parseCharges = function(ch) {
+    for(index=0; index < ch.length; index++) {
+     var m = /^(.+), (.+)$/.exec(ch[index].type);
+     if(m != null) {
+      ch[index].type = m[1];
+      ch[index].charge = m[2];
+     }
+    }
+   };
+   parseCharges(obj.highs);
+   parseCharges(obj.meds);
+   return obj;
+  }
+  function makeMediaWiki(obj) {
+   var str = "=== " + obj.fitname + "===\n\n";
+   var i;
+   var printContents = function(wh) {
+    for(i = 0; i < wh.length; i+=1) {
+     str += ":" + wh[i].repeats + " x " + wh[i].type;
+     if(wh[i].charge != null) {
+      str += " (" + wh[i].charge + ")";
+     }
+     str += "\n";
+    }
+   };
+   str += ";High\n";   printContents(obj.highs);
+   str += ";Mid\n";    printContents(obj.meds);
+   str += ";Low\n";    printContents(obj.lows);
+   if(obj.rigs.length > 0) {
+    str += ";Rigs\n";   printContents(obj.rigs);
+   }
+   if(obj.drones.length > 0) {
+    str += ";Drones\n"; printContents(obj.drones);
+   }
+   return str;
+  }
+  function makeHTML(obj) {
+   var str = "<h3>" + obj.fitname + "</h3><dl>";
+   var i;
+   var printContents = function(wh) {
+    for(i = 0; i < wh.length; i+=1) {
+     str += "<dd>" + wh[i].repeats + " x " + wh[i].type;
+     if(wh[i].charge != null) {
+      str += " (" + wh[i].charge + ")";
+     }
+     str += "</dd>";
+    }
+   };
+   str += "<dt>High</dt>"; printContents(obj.highs);
+   str += "<dt>Mid</dt>"; printContents(obj.meds);
+   str += "<dt>Low</dt>"; printContents(obj.lows);
+   if(obj.rigs.length > 0) {
+    str += "<dt>Rigs</dt>";   printContents(obj.rigs);
+   }
+   if(obj.drones.length > 0) {
+    str += "<dt>Drones</dt>"; printContents(obj.drones);
+   }
+   str += "</dl>";
+   return str;
+  }
+ </script>
+</head>
+
+<body>
+
+<form>
+<table>
+
+<tr>
+ <td style="width:50%">MediaWiki code (ctrl-a, ctrl-c is your friend)<br><textarea 
+id="mediawiki" readonly></textarea>
+ <td style="width:50%">Preview<br><div id="previewarea"></div>
+
+<tr>
+ <td style="width:100%" colspan="2"><h2>Paste here:</h2><br>
+ <textarea id="pastearea" autofocus onChange="modified()" onKeyUp="modified
+()"></textarea>
+
+<tr>
+ <td style="width:100%" colspan="2"><button onClick="document.getElementById
+('debugarea').style.display = ''; return false;">Show JSON parse</button><br>
+ <textarea id="debugarea" style="display:none" readonly></textarea>
+</table>
+
+</form>
+
+</body>
+</html>
+
