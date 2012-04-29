@@ -43,6 +43,12 @@
    for(; index < lines.length; index += 1) {
     if(lines[index] === "") {
      todoindex += 1;
+     // EFT likes to double the space before drones, so this is a hack to accept
+     // an extra space between subsystems and drones for drone strat cruisers...
+     // were normally that extra space is absorbed by subsystems
+     if(todoindex === 5 && lines[index] === "") {
+      index += 1; // eat an extra line! double space between subs and drones
+     }
     } else {
      for(repeated = 1; lines[index+1] === lines[index]; repeated += 1) {
       index += 1;
