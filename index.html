@@ -7,9 +7,11 @@
   body { font: small sans-serif; }
   table { width: 100%; }
   textarea { width: 100%; height: 180pt; }
-  td { vertical-align:top; padding: 5px; }
-  h1, h2, h3 { margin: 0; }
+  div#previewarea { width:100%; min-height: 180pt; border: 1pt solid lightgray; padding: 2pt; margin: 1pt; }
+  td { vertical-align:top; padding: 5px; width: 50%; }
+  h1, h2, h3 { margin: 0; line-height: 100%; }
   dt { font-weight: bold; }
+  hr { clear: both; border: 1px solid lightgray; width: 40%; margin: 12pt auto; height: 0px;  }
  </style>
  <script>
   function modified() {
@@ -22,6 +24,7 @@
    ma.value = makeMediaWiki(obj);
    pa.innerHTML = makeHTML(obj);
   }
+  ////////////// Bloody parser...
   function parseEFT(text) {
    var lines = text.split("\n");
    var firstline = /^\[([^,]+), (.+)\]$/.exec(lines[0]);
@@ -77,6 +80,7 @@
    parseCharges(obj.meds);
    return obj;
   }
+  ////////////// MediaWiki renderer
   function makeMediaWiki(obj) {
    var str = "=== " + obj.fitname + "===\n\n";
    var i;
@@ -107,6 +111,7 @@
    }
    return str;
   }
+  ////////////// HTML renderer
   function makeHTML(obj) {
    var str = "<h3>" + obj.fitname + "</h3><dl>";
    var i;
@@ -145,22 +150,32 @@
 
 <form>
 <table>
-
 <tr>
- <td style="width:50%">MediaWiki code (ctrl-a, ctrl-c is your friend)<br><textarea 
-id="mediawiki" readonly></textarea>
- <td style="width:50%">Preview<br><div id="previewarea"></div>
+<td>
 
-<tr>
- <td style="width:100%" colspan="2"><h2>Paste EFT textblock here:</h2><br>
- <textarea id="pastearea" autofocus onChange="modified()" onKeyUp="modified
-()"></textarea>
+ <h2>Paste EFT textblock here:</h2>
+ <textarea id="pastearea" autofocus onChange="modified()" onKeyUp="modified()"></textarea>
 
-<tr>
- <td style="width:100%" colspan="2"><button onClick="document.getElementById
-('debugarea').style.display = ''; return false;">Show JSON parse</button><br>
+ <hr>
+ 
+ MediaWiki code (ctrl-a, ctrl-c is your friend)<br>
+ <textarea id="mediawiki" readonly></textarea>
+
+ <hr>
+ 
+ <a href="#" onClick="document.getElementById('debugarea').style.display = ''; return false;">Show debugging JSON</a><br>
  <textarea id="debugarea" style="display:none" readonly></textarea>
+ 
+</td>
+<td>
+
+ Preview<br>
+ <div id="previewarea"></div>
+
+</td> 
+</tr>
 </table>
+
 
 </form>
 
